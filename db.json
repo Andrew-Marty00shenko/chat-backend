@@ -71,11 +71,11 @@
             }
         },
         {
-            "_id": "15f7ca200b7f4905589640a96",
+            "_id": "64d1b3ad8ba6ca004187ab92c71f75e1",
             "text": "Laborum cupidatat anim Lorem irure irure ad. Ipsum incididunt eiusmod qui commodo. Magna ipsum commodo consectetur anim incididunt elit cillum deserunt ullamco culpa adipisicing.",
             "created_at": "Fri Jul 14 1978 17:02:01 GMT+0300 (Москва, стандартное время)",
             "user": {
-                "_id": "45f7ca2004f9e29fc778b1a40",
+                "_id": "64d1b3ad8ba6ca004187ab92c71f75e1",
                 "fullname": "Andrews Duncan",
                 "avatar": null
             }
@@ -91,31 +91,31 @@
             }
         },
         {
-            "_id": "45f7ca2006e61cf74610732c6",
+            "_id": "95f045d111a9e2c99323145a269bf11a",
             "text": "Id proident in labore qui deserunt cillum consequat nostrud nisi velit ullamco eu. Velit proident irure eiusmod nulla adipisicing aute consequat eu aliquip duis in. Magna excepteur ex ex eiusmod nostrud commodo occaecat.",
             "created_at": "Mon Aug 28 1972 19:02:55 GMT+0300 (Москва, стандартное время)",
             "user": {
-                "_id": "35f7ca200d02975974d7c2649",
+                "_id": "95f045d111a9e2c99323145a269bf11a",
                 "fullname": "Jerri Mcknight",
                 "avatar": null
             }
         },
         {
-            "_id": "25f7ca20097def40d2d3d3978",
+            "_id": "95f045d111a9e2c99323145a269bf11a",
             "text": "Voluptate aliquip irure non anim. Sint excepteur quis elit ut dolor aliquip laboris consequat quis commodo aute amet cupidatat. Culpa esse cillum elit laboris id fugiat sint fugiat do.",
             "created_at": "Sun Mar 02 2008 03:31:35 GMT+0300 (Москва, стандартное время)",
             "user": {
-                "_id": "55f7ca200edf04b09683c9a48",
+                "_id": "95f045d111a9e2c99323145a269bf11a",
                 "fullname": "Kane Travis",
                 "avatar": null
             }
         },
         {
-            "_id": "55f7ca200580936dc99b8a881",
+            "_id": "1830d4ba1775824203ada3dc859bf728",
             "text": "Aliquip in laboris sint enim in quis. Fugiat exercitation aute ex nulla ullamco enim eiusmod eu dolore quis laboris aliquip dolore irure. Magna fugiat laboris est velit nisi exercitation consectetur laboris non ad.",
             "created_at": "Sun Jun 12 2005 18:20:04 GMT+0400 (Москва, летнее время)",
             "user": {
-                "_id": "15f7ca200fc3ebe2dd629b2f7",
+                "_id": "1830d4ba1775824203ada3dc859bf728",
                 "fullname": "Jacobson Mays",
                 "avatar": null
             }
@@ -129,7 +129,7 @@
             "user": {
                 "_id": "536d22cba36f4944adf632822a5fbb4f",
                 "fullname": "Valenzuela Mckinney",
-                "avatar": null
+                "avatar": "https://sun2.beltelecom-by-minsk.userapi.com/impg/dNKXQWTeGJ003x_gCst6OuqZL7D7p8w3Z-RgVA/P71CPDUDt0s.jpg?size=50x0&quality=88&crop=0,0,2160,2160&sign=e7e48d1205e811ab973867329aae2f70&ava=1"
             },
             "dialog": "536d22cba36f4944adf632822a5fbb4f"
         },
