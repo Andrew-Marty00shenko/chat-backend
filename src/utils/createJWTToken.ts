@@ -6,7 +6,7 @@ interface ILoginData {
     password: string
 }
 
-export default (user: ILoginData) => {
+export default (user: any) => {
 
     let token = jwt.sign(
         {
