@@ -1,13 +1,28 @@
 import express from 'express';
+import socket from 'socket.io';
+
 import { DialogModel, MessageModel } from '../models'
 
 class DialogController {
-    index(req: express.Request, res: express.Response) {
-        const authorId = '5fa3eda73ae8f50980db9d9c';
+    io: socket.Server;
+
+    constructor(io: socket.Server) {
+        this.io = io
+    }
+
+    index = (req: express.Request, res: express.Response) => {
+        const userId = req.user;
 
         DialogModel
-            .find({ author: authorId })
+            .find()
+            .or([{ author: userId }, { partner: userId }])
             .populate(['author', 'partner'])
+            .populate({
+                path: 'lastMessage',
+                populate: {
+                    path: 'user',
+                },
+            })
             .exec((err: any, dialogs: any) => {
                 if (err) {
                     return res.status(404).json({
@@ -18,12 +33,14 @@ class DialogController {
             });
     }
 
-    create(req: express.Request, res: express.Response) {
+    create = (req: express.Request, res: express.Response) => {
         const postData = {
-            author: req.body.author,
+            author: req.user,
             partner: req.body.partner,
         };
+
         const dialog = new DialogModel(postData);
+
         dialog
             .save()
             .then((dialogObj: any) => {
@@ -36,7 +53,14 @@ class DialogController {
                 message
                     .save()
                     .then(() => {
-                        res.json(dialogObj)
+                        dialogObj.lastMessage = message._id;
+                        dialogObj.save().then(() => {
+                            res.json(dialogObj);
+                            this.io.emit('SERVER:DIALOG_CREATED', {
+                                ...postData,
+                                dialog: dialogObj
+                            });
+                        });
                     })
                     .catch((reason: any) => {
                         res.json(reason);
@@ -47,7 +71,7 @@ class DialogController {
             });
     }
 
-    delete(req: express.Request, res: express.Response) {
+    delete = (req: express.Request, res: express.Response) => {
         const id: string = req.params.id;
         DialogModel.findOneAndRemove({ _id: id })
             .then((dialog: any) => {

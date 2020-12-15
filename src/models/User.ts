@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import isEmail from "validator/lib/isEmail";
 import { generatePasswordHash } from '../utils';
+import differenceInMinutes from 'date-fns/differenceInMinutes';
+import { parseISO } from 'date-fns';
 
 export interface IUser extends Document {
     email?: string;
@@ -41,6 +43,15 @@ const UserSchema = new Schema({
     timestamps: true
 });
 
+UserSchema.virtual('isOnline').get(function (this: any) {
+    let date: any = new Date();
+    return differenceInMinutes(parseISO(date.toISOString()), this.last_seen) < 5;
+});
+
+UserSchema.set('toJSON', {
+    virtuals: true
+});
+
 UserSchema.pre('save', function (next) {
     const user: IUser = this;
 
@@ -49,7 +60,10 @@ UserSchema.pre('save', function (next) {
     generatePasswordHash(user.password)
         .then((hash: any) => {
             user.password = String(hash);
-            next();
+            generatePasswordHash(+new Date()).then(confirmHash => {
+                user.confirm_hash = String(confirmHash);
+                next();
+            });
         })
         .catch((err: any) => {
             next(err);

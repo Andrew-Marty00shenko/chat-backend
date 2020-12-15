@@ -1,0 +1,18 @@
+const socket = require('socket.io');
+import http from 'http';
+
+export default (http: http.Server) => {
+
+    const io = socket(http, {
+        cors: {
+            origin: "http://localhost:3000",
+            methods: ["GET", "POST"]
+        }
+    })
+
+    io.on('connection', function (socket: any) {
+        console.log('connected')
+    });
+
+    return io;
+}
