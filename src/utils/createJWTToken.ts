@@ -6,11 +6,12 @@ interface ILoginData {
     password: string
 }
 
-export default (user: any) => {
+export default (user: ILoginData) => {
 
     let token = jwt.sign(
         {
-            data: reduce(user,
+            data: reduce(
+                user,
                 (result: any, value: string, key: string) => {
                     if (key !== "password") {
                         result[key] = value;

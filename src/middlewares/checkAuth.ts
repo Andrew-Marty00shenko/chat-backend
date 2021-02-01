@@ -1,23 +1,34 @@
-import express from 'express';
-import { IUser } from '../models/User';
-import { verifyJWTToken } from '../utils';
 
-export default (req: any, res: any, next: any) => {
-    const token = req.headers.token;
+import express from "express";
+import { verifyJWTToken } from "../utils";
+import { DecodedData } from "../utils/verifyJWTToken";
 
-    if (req.path === '/user/signin' ||
-        req.path === '/user/signup' ||
-        req.path === '/user/verify'
+export default (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+): void => {
+    if (
+        req.path === "/user/signin" ||
+        req.path === "/user/signup" ||
+        req.path === "/user/verify"
     ) {
         return next();
     }
 
-    verifyJWTToken(token)
-        .then((user: any) => {
-            req.user = user.data._doc._id;
-            next();
-        })
-        .catch((err) => {
-            res.status(403).json({ message: "Invalid auth token provided." });
-        });
+    const token: string | null =
+        "token" in req.headers ? (req.headers.token as string) : null;
+
+    if (token) {
+        verifyJWTToken(token)
+            .then((user: DecodedData | null) => {
+                if (user) {
+                    req.user = user.data._doc;
+                }
+                next();
+            })
+            .catch(() => {
+                res.status(403).json({ message: "Invalid auth token provided." });
+            });
+    }
 }

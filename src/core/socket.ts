@@ -11,7 +11,13 @@ export default (http: http.Server) => {
     })
 
     io.on('connection', function (socket: any) {
-        console.log('connected')
+        socket.on('DIALOGS:JOIN', (dialogId: string) => {
+            socket.dialogId = dialogId;
+            socket.join(dialogId);
+        });
+        socket.on('DIALOGS:TYPING', (obj: any) => {
+            socket.broadcast.emit('DIALOGS:TYPING', obj);
+        });
     });
 
     return io;

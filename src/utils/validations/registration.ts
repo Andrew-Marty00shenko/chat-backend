@@ -1,4 +1,4 @@
-import { check, validationResult } from 'express-validator'
+import { check } from 'express-validator'
 
 export default [
     check('email').isEmail(),

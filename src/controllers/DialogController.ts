@@ -10,7 +10,7 @@ class DialogController {
         this.io = io
     }
 
-    index = (req: express.Request, res: express.Response) => {
+    index = (req: express.Request, res: express.Response): void => {
         const userId = req.user;
 
         DialogModel
@@ -33,48 +33,72 @@ class DialogController {
             });
     }
 
-    create = (req: express.Request, res: express.Response) => {
+    create = (req: express.Request, res: express.Response): void => {
         const postData = {
             author: req.user,
             partner: req.body.partner,
         };
 
-        const dialog = new DialogModel(postData);
+        DialogModel.findOne(
+            {
+                author: req.user,
+                partner: req.body.partner
+            },
+            (err, dialog) => {
+                if (err) {
+                    return res.status(500).json({
+                        status: 'error',
+                        message: err
+                    });
+                }
+                if (dialog) {
+                    return res.status(403).json({
+                        status: 'error',
+                        message: 'Такой диалог уже есть'
+                    });
+                } else {
+                    const dialog = new DialogModel(postData);
 
-        dialog
-            .save()
-            .then((dialogObj: any) => {
-                const message = new MessageModel({
-                    text: req.body.text,
-                    dialog: dialogObj._id,
-                    user: req.body.author
-                });
+                    dialog
+                        .save()
+                        .then((dialogObj) => {
+                            const message = new MessageModel({
+                                text: req.body.text,
+                                dialog: dialogObj._id,
+                                user: req.user
+                            });
 
-                message
-                    .save()
-                    .then(() => {
-                        dialogObj.lastMessage = message._id;
-                        dialogObj.save().then(() => {
-                            res.json(dialogObj);
-                            this.io.emit('SERVER:DIALOG_CREATED', {
-                                ...postData,
-                                dialog: dialogObj
+                            message
+                                .save()
+                                .then(() => {
+                                    dialogObj.lastMessage = message._id;
+                                    dialogObj.save().then(() => {
+                                        res.json(dialogObj);
+                                        this.io.emit('SERVER:DIALOG_CREATED', {
+                                            ...postData,
+                                            dialog: dialogObj
+                                        });
+                                    });
+                                })
+                                .catch((reason) => {
+                                    res.json(reason);
+                                });
+                        })
+                        .catch((err) => {
+                            res.json({
+                                status: 'error',
+                                message: err
                             });
                         });
-                    })
-                    .catch((reason: any) => {
-                        res.json(reason);
-                    });
-            })
-            .catch((reason: any) => {
-                res.json(reason);
-            });
+                }
+            }
+        )
     }
 
-    delete = (req: express.Request, res: express.Response) => {
+    delete = (req: express.Request, res: express.Response): void => {
         const id: string = req.params.id;
         DialogModel.findOneAndRemove({ _id: id })
-            .then((dialog: any) => {
+            .then((dialog) => {
                 if (dialog) {
                     res.json({
                         message: `Dialog deleted`

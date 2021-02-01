@@ -2,10 +2,12 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import socket from 'socket.io';
 
+import mailer from '../core/mailer';
 import { UserModel } from '../models';
+import { IUser } from "../models/User";
 import { createJWTToken } from '../utils';
-import { validationResult } from 'express-validator';
-import { userInfo } from 'os';
+import { SentMessageInfo } from "nodemailer/lib/sendmail-transport";
+import { validationResult, Result, ValidationError } from 'express-validator';
 
 class UserController {
     io: socket.Server;
@@ -13,11 +15,6 @@ class UserController {
     constructor(io: socket.Server) {
         this.io = io
     }
-    // constructor() {
-    //     io.on('connection', (socket: any) => {
-
-    //     })
-    // }
 
     show = (req: express.Request, res: express.Response) => {
         const id: string = req.params.id;
@@ -31,16 +28,13 @@ class UserController {
         });
     }
 
-    verify = (req: express.Request, res: express.Response) => {
+    verify = (req: express.Request, res: express.Response): void => {
         const hash: any = req.query.hash;
 
         if (!hash) {
-            return res.status(404).json({
-                message: 'Invalid hash'
-            });
+            res.status(422).json({ errors: "Invalid hash" });
         } else {
-
-            UserModel.findOne({ confirm_hash: hash }, (err: any, user: any) => {
+            UserModel.findOne({ confirm_hash: hash }, (err: any, user: IUser) => {
                 if (err || !user) {
                     return res.status(404).json({
                         status: 'error',
@@ -55,8 +49,9 @@ class UserController {
                         return res.status(404).json({
                             status: 'error',
                             message: err
-                        })
+                        });
                     }
+
                     res.json({
                         status: 'success',
                         message: 'Аккаунт успешно подтвержден!'
@@ -68,91 +63,131 @@ class UserController {
 
     getMe = (req: express.Request, res: express.Response) => {
         const id = req.user;
-        UserModel.findById(id, (err, user: any) => {
-            if (err) {
+        UserModel.findById(id, (err, user: IUser) => {
+            if (err || !user) {
                 return res.status(404).json({
                     message: 'Not found'
                 });
             }
-            console.log(user.isOnline)
             res.json(user);
         });
     }
 
-    delete = (req: express.Request, res: express.Response) => {
+    delete = (req: express.Request, res: express.Response): void => {
         const id: string = req.params.id;
         UserModel.findOneAndRemove({ _id: id })
-            .then((user) => {
+            .then((user: IUser | null) => {
                 if (user) {
                     res.json({
                         message: `User ${user.fullname} deleted`
                     });
+                } else {
+                    res.status(404).json({
+                        status: "error",
+                    });
                 }
             })
-            .catch(() => {
+            .catch((err: any) => {
                 res.json({
-                    message: 'User not found'
+                    message: err
                 });
             });
     }
 
     create = (req: express.Request, res: express.Response) => {
-        const postData = {
+        const postData: { email: string; fullname: string; password: string } = {
             email: req.body.email,
             fullname: req.body.fullname,
             password: req.body.password
         };
 
-        const errors = validationResult(req);
+        const errors: Result<ValidationError> = validationResult(req);
 
         if (!errors.isEmpty()) {
             return res.status(422).json({ errors: errors.array() });
+        } else {
+            const user = new UserModel(postData);
+
+            user
+                .save()
+                .then((obj: IUser) => {
+                    res.json(obj);
+                    mailer.sendMail(
+                        {
+                            from: 'andriei.martyshienko@mail.ru',
+                            to: postData.email,
+                            subject: 'Подтверждение почты AndrewhaGramm',
+                            html: `Для того, чтобы подтвердить почту, перейдите <a href="http://localhost:3000/signup/verify?hash=${obj.confirm_hash}">по этой ссылке</a>`,
+                        },
+
+                        (err: Error | null, info: SentMessageInfo) => {
+                            console.log(obj.confirm_hash);
+                            if (err) {
+                                console.log(err, 123);
+                            } else {
+                                console.log(info);
+                            }
+                        }
+                    );
+                }).catch((reason) => {
+                    res.status(500).json({
+                        status: 'error',
+                        message: reason
+                    })
+                });
         }
+    };
 
-        const user = new UserModel(postData);
-
-        user.save().then((obj: any) => {
-            res.json(obj);
-        }).catch((reason) => {
-            res.status(500).json({
-                status: 'error',
-                message: reason
-            })
-        });
-    }
-
-    login = (req: express.Request, res: express.Response) => {
-        const postData = {
+    login = (req: express.Request, res: express.Response): void => {
+        const postData: { email: string; password: string } = {
             email: req.body.email,
             password: req.body.password
         };
 
-        const errors = validationResult(req);
+        const errors: Result<ValidationError> = validationResult(req);
 
         if (!errors.isEmpty()) {
-            return res.status(422).json({ errors: errors.array() });
+            res.status(422).json({ errors: errors.array() });
+        } else {
+            UserModel.findOne({ email: postData.email }, (err, user: IUser) => {
+                if (err || !user) {
+                    return res.status(404).json({
+                        message: 'User not found'
+                    });
+                }
+
+                if (bcrypt.compareSync(postData.password, user.password)) {
+                    const token = createJWTToken(user);
+                    res.json({
+                        status: 'success',
+                        token
+                    });
+                } else {
+                    res.status(403).json({
+                        status: 'err',
+                        message: 'Incorrect password or email'
+                    });
+                }
+            });
         }
+    }
 
-        UserModel.findOne({ email: postData.email }, (err, user: any) => {
-            if (err || !user) {
+    findUsers = (req: express.Request, res: express.Response) => {
+        const query: any = req.query.query;
+
+        UserModel.find()
+            .or([
+                { fullname: new RegExp(query, 'i') },
+                { email: new RegExp(query, 'i') }
+            ])
+            .then((users: IUser[]) => {
+                res.json(users);
+            }).catch((err: any) => {
                 return res.status(404).json({
-                    message: "User not found"
-                });
-            }
-
-            if (bcrypt.compareSync(postData.password, user.password)) {
-                const token = createJWTToken(user);
-                res.json({
-                    status: 'success',
-                    token
-                });
-            } else {
-                res.status(403).json({
                     status: 'error',
-                    message: 'incorect password or email'
+                    message: err
                 });
-            }
-        });
+            });
     }
 }
 

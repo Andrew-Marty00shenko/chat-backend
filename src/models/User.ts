@@ -5,13 +5,14 @@ import differenceInMinutes from 'date-fns/differenceInMinutes';
 import { parseISO } from 'date-fns';
 
 export interface IUser extends Document {
-    email?: string;
-    fullname?: string;
-    password?: string;
-    confirmed?: boolean;
-    avatar?: string;
-    confirm_hash?: string;
-    last_seen?: Date;
+    email: string;
+    fullname: string;
+    password: string;
+    confirmed: boolean;
+    avatar: string;
+    confirm_hash: string;
+    last_seen: Date;
+    data?: IUser;
 }
 
 const UserSchema = new Schema({
@@ -52,22 +53,16 @@ UserSchema.set('toJSON', {
     virtuals: true
 });
 
-UserSchema.pre('save', function (next) {
-    const user: IUser = this;
+UserSchema.pre<IUser>("save", async function (next) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const user: any = this;
 
-    if (!user.isModified('password')) return next();
+    if (!user.isModified("password")) {
+        return next();
+    }
 
-    generatePasswordHash(user.password)
-        .then((hash: any) => {
-            user.password = String(hash);
-            generatePasswordHash(+new Date()).then(confirmHash => {
-                user.confirm_hash = String(confirmHash);
-                next();
-            });
-        })
-        .catch((err: any) => {
-            next(err);
-        });
+    user.password = await generatePasswordHash(user.password);
+    user.confirm_hash = await generatePasswordHash(new Date().toString());
 });
 
 const UserModel = mongoose.model<IUser>('User', UserSchema);
