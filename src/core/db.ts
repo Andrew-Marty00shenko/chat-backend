@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
+const dotenv = require("dotenv");
 
-mongoose.connect(
-    "mongodb://localhost:27017/chat",
+dotenv.config()
+
+mongoose.connect(process.env.MONGODB_URI || '',
     {
         useNewUrlParser: true,
         useCreateIndex: true,

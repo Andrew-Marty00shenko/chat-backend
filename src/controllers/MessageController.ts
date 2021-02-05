@@ -36,11 +36,11 @@ class MessageController {
         );
     };
 
-    index = (req: express.Request, res: express.Response) => {
+    index = (req: express.Request, res: express.Response): void => {
         const dialogId: any = req.query.dialog;
         const userId: any = req.user;
 
-        this.updateReadStatus(res, userId, dialogId);
+        this.updateReadStatus(res, userId._id, dialogId);
 
         MessageModel.find({ dialog: dialogId })
             .populate(["dialog", "user", "attachments"])
@@ -56,20 +56,22 @@ class MessageController {
     }
 
     create = (req: express.Request, res: express.Response): void => {
-        const userId = req.user;
+        const userId: any = req.user;
 
         const postData = {
             text: req.body.text,
             dialog: req.body.dialog_id,
-            user: userId,
+            user: userId._id,
             attachments: req.body.attachments
         };
 
         const message = new MessageModel(postData);
 
+        this.updateReadStatus(res, userId, req.body.dialog_id);
+
         message
             .save()
-            .then((obj: any) => {
+            .then((obj: IMessage) => {
                 obj.populate('dialog user attachments',
                     (err: any, message: IMessage) => {
                         if (err) {
@@ -104,7 +106,7 @@ class MessageController {
 
     delete = (req: express.Request, res: express.Response): void => {
         const id = req.query.id;
-        const userId = req.user;
+        const userId: any = req.user;
 
         MessageModel.findById(id, (err, message: any) => {
             if (err || !message) {
@@ -114,7 +116,7 @@ class MessageController {
                 });
             }
 
-            if (message.user.toString() === userId) {
+            if (message.user.toString() === userId._id) {
 
                 const dialogId = message.dialog;
                 message.remove();

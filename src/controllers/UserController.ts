@@ -121,7 +121,6 @@ class UserController {
                         },
 
                         (err: Error | null, info: SentMessageInfo) => {
-                            console.log(obj.confirm_hash);
                             if (err) {
                                 console.log(err, 123);
                             } else {
